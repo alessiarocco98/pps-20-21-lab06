@@ -28,14 +28,23 @@ trait NonEmpty[T] extends Parser[T]{
 
 class NonEmptyParser(chars: Set[Char]) extends BasicParser(chars) with NonEmpty[Char]
 
-trait NotTwoConsecutive[T] extends Parser[T]{
-  // ???
+trait NotTwoConsecutive[T] extends Parser[T] {
+  private var prev: Option[T] = Option.empty
+  private var duplicate: Boolean = false
+
+  abstract override def parse(t: T): Boolean = {
+    if(prev.isDefined && !duplicate){
+      duplicate = t == prev.get
+    }
+    prev = Some(t)
+    super.parse(t)
+  } // is the token accepted?
+  abstract override def end(): Boolean = !duplicate && super.end()   // is it ok to end here
 }
 
-class NotTwoConsecutiveParser(chars: Set[Char]) extends BasicParser(chars) // ??? with ...
+class NotTwoConsecutiveParser(chars: Set[Char]) extends BasicParser(chars)  with NotTwoConsecutive[Char]// ??? with ...
 
-
-object TryParsers extends App {
+object TryParsersComb extends App {
   def parser = new BasicParser(Set('a','b','c'))
   println(parser.parseAll("aabc".toList)) // true
   println(parser.parseAll("aabcdc".toList)) // false
